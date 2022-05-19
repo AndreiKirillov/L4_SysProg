@@ -3,7 +3,7 @@
 
 extern std::mutex console_mtx;
 
-Server::Server(): _tasks_to_do(), _working_threads()
+Server::Server(): _tasks_to_do()
 {
 }
 

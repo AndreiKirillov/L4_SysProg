@@ -9,7 +9,6 @@ class Server
 private:
 	
 	std::queue<Task> _tasks_to_do;
-	ThreadStorage _working_threads;
 
 
 	Server(Server&);               // запрещаем копирование и присваивание

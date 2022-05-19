@@ -16,17 +16,6 @@
 #define new DEBUG_NEW
 #endif
 
-struct header // заголовок для сообщения
-{
-    int event_code;
-    int thread_id;
-    int message_size;
-};
-
-// тип задачи для обработки сервером
-enum class Task
-{start_thread, stop_thread, process_message};
-
 // Единственный объект приложения
 
 CWinApp theApp;
@@ -157,11 +146,12 @@ int main()
 
             while (true)
             {
-                int event_index = WaitForMultipleObjects(4, hControlEvents, FALSE, INFINITE) - WAIT_OBJECT_0; // Ждём событие от 
+                Task current_task = main_server.GetOldestTask();
+                //int event_index = WaitForMultipleObjects(4, hControlEvents, FALSE, INFINITE) - WAIT_OBJECT_0; // Ждём событие от 
                                                                                                               // главной программы
-                switch (event_index)
+                switch (current_task)
                 {
-                case 0:         // Событие создания потока
+                case Task::start_thread:         // Событие создания потока
                 {
                     std::unique_ptr<ThreadKirillov> new_thread = std::make_unique<ThreadKirillov>(); // Новый объект потока
 
@@ -188,7 +178,7 @@ int main()
                 }
                 break;
 
-                case 1:              // Событие завершения потока
+                case Task::stop_thread:              // Событие завершения потока
                 {
                     if (threads_storage.GetCount() > 0)
                     {
@@ -209,7 +199,7 @@ int main()
                 }
                 break;
 
-                case 2:
+                case Task::process_message:
                 {
                     header msg_header = ReadHeader();    // читаем заголовок, чтобы узнать, какой поток должен читать сообщение
                     if (msg_header.message_size != 0)
