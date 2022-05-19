@@ -75,6 +75,7 @@ struct header
 
 HANDLE hWriteToChild, hChildRead;
 HANDLE hChildWrite, hReadFromChild;
+HANDLE ClientPipe;
 
 
 extern "C"
@@ -200,6 +201,19 @@ extern "C"
 	}
 
 }
+
+//Функция создания именованного канала
+__declspec(dllexport) HANDLE __stdcall dllCreateNamedPipe()
+{
+	return CreateNamedPipeA("\\\\.\\pipe\MyPipe_lab4", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+		PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
+}
+//__declspec(dllexport) HANDLE __stdcall dllWaitFor()
+//{
+//	return CreateNamedPipeA("\\\\.\\pipe\MyPipe_lab4", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+//		PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
+//}
+
 
 // Функция чтения заголовка сообщения
 __declspec(dllexport) header __stdcall ReadHeader()
