@@ -5,6 +5,8 @@
 #include "framework.h"
 #include "FileMapping.h"
 #include <string>
+#include <vector>
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -75,11 +77,43 @@ struct header
 
 HANDLE hWriteToChild, hChildRead;
 HANDLE hChildWrite, hReadFromChild;
-HANDLE ClientPipe;
+HANDLE hClientPipe;
 
 
 extern "C"
 {
+	// Функция подключения клиента к серверу
+	__declspec(dllexport) bool __stdcall ConnectToServer()
+	{
+		if (!WaitNamedPipeA("\\\\.\\pipe\\MyPipe_lab4", 3000))
+		{
+			return false;
+		}
+		else
+		{
+			HANDLE hPipe = CreateFileA("\\\\.\\pipe\\MyPipe_lab4", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+			if (hPipe == INVALID_HANDLE_VALUE)
+				return false;
+			else
+			{
+				hClientPipe = hPipe;      // Сохраняем хэндл канала
+				return true;
+			}
+		}
+	}
+
+	__declspec(dllexport) bool __stdcall SendMessageToServer(const char* message, header& h)
+	{
+		DWORD dwWrite;
+		if (!WriteFile(hClientPipe, &h, sizeof(header), &dwWrite, nullptr) || dwWrite == 0) // пишем заголовок
+			return false;
+
+		dwWrite = 0;
+		if (!WriteFile(hClientPipe, message, strlen(message) + 1, &dwWrite, nullptr) || dwWrite == 0) // пишем тело сообщения
+			return false;
+		return true;
+	}
+
 	// Функция отправки сообщения через mapped файл
 	__declspec(dllexport) bool __stdcall SendMappingMessage(void* message, header& h)
 	{
@@ -202,36 +236,27 @@ extern "C"
 
 }
 
-//Функция создания именованного канала
-__declspec(dllexport) HANDLE __stdcall dllCreateNamedPipe()
-{
-	return CreateNamedPipeA("\\\\.\\pipe\MyPipe_lab4", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-		PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
-}
-//__declspec(dllexport) HANDLE __stdcall dllWaitFor()
-//{
-//	return CreateNamedPipeA("\\\\.\\pipe\MyPipe_lab4", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-//		PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
-//}
-
-
 // Функция чтения заголовка сообщения
 __declspec(dllexport) header __stdcall ReadHeader()
 {
 	header received_header{ -1,-1,-1 };
 
-	HANDLE input_handle = GetStdHandle(STD_INPUT_HANDLE); // получаем дескриптор ввода, который отвечает за прием сообщения
-	if (input_handle == INVALID_HANDLE_VALUE)
-		return received_header;
-
 	DWORD dwRead;
-
-	// читаем заголовок
-	if (!ReadFile(input_handle, &received_header, sizeof(header), &dwRead, nullptr) || dwRead == 0)
+	if (!ReadFile(hClientPipe, &received_header, sizeof(header), &dwRead, nullptr) || dwRead == 0)
 		return header{ -1,-1,-1 };
 
 	return received_header;
 }
+
+//string ReadFromServer()
+//{
+//	DWORD dwDone;
+//	int nLength = GetInt(hPipe);
+//
+//	vector <char> v(nLength);
+//	ReadFile(hPipe, &v[0], nLength, &dwDone, NULL);
+//	return string(&v[0], nLength);
+//}
 
 // Функция чтения сообщения от родительского процесса
 __declspec(dllexport) string __stdcall ReadFromParent(const header& h)

@@ -10,6 +10,7 @@
 #include "ThreadKirillov.h"
 #include "ThreadStorage.h"
 #include "FileMapping.h"
+#include "Server.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -22,15 +23,9 @@ struct header // заголовок для сообщения
     int message_size;
 };
 
-// Функции из dll
-extern "C"
-{
-    __declspec(dllimport) bool __stdcall SendMappingMessage(void* message, header& h);
-}
-__declspec(dllimport) std::string __stdcall ReadFromParent(const header& h);
-__declspec(dllimport) header __stdcall ReadHeader();
-__declspec(dllimport) bool __stdcall WriteToParent(int message_code);
-__declspec(dllexport) void __stdcall ClosePipeResources();
+// тип задачи для обработки сервером
+enum class Task
+{start_thread, stop_thread, process_message};
 
 // Единственный объект приложения
 
@@ -150,36 +145,16 @@ int main()
         {
             setlocale(LC_ALL, "Russian");
 
+            Server main_server;
+
             ptr_received_message = make_shared<string>(); // память под будущие сообщения
-
-            // список программных событий
-            list<HANDLE> kernel_objects; 
-            HANDLE create_thread_event = CreateEventA(NULL, FALSE, FALSE, "CreateNewThread");
-            kernel_objects.push_back(create_thread_event);
-
-            HANDLE close_thread_event = CreateEventA(NULL, FALSE, FALSE, "CloseThread");
-            kernel_objects.push_back(close_thread_event);
-
-            HANDLE confirm_event = CreateEventA(NULL, FALSE, FALSE, "ConfirmEvent");
-            kernel_objects.push_back(confirm_event);
-
-            HANDLE close_programm_event = CreateEventA(NULL, FALSE, FALSE, "CloseProgrammEvent");
-            kernel_objects.push_back(close_programm_event);
-
-            HANDLE message_event = CreateEventA(NULL, FALSE, FALSE, "SendMessage");
-            kernel_objects.push_back(message_event);
-
-            HANDLE error_event = CreateEventA(NULL, FALSE, FALSE, "ErrorEvent");
-            kernel_objects.push_back(error_event);
-
-            HANDLE hControlEvents[4] = { create_thread_event, close_thread_event, message_event, close_programm_event };
 
             ThreadStorage threads_storage;
 
-            //WriteToParent(1);
+            // Запускаем поиск новых подключений в отдельном потоке
+            thread connections_checker(&Server::WaitForConnection, main_server); 
+            connections_checker.detach();
 
-            SetEvent(confirm_event);   // подтвердение запуска приложения
-            
             while (true)
             {
                 int event_index = WaitForMultipleObjects(4, hControlEvents, FALSE, INFINITE) - WAIT_OBJECT_0; // Ждём событие от 
