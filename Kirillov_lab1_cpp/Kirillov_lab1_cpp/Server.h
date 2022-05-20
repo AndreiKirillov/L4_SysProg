@@ -11,7 +11,7 @@ class Server
 private:
 	set<unique_ptr<Connection>> _connections;
 	ThreadStorage _working_threads;
-	mutex mtx_for_working_threads;
+	mutex mtx_for_working_threads;             // синхронизирует доступ к рабочим потокам
 
 
 	void ProcessClient(HANDLE hConnection, int client_id);

@@ -28,6 +28,8 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
 
     while (true)
     {
+        lock_guard<mutex> lock_to_threads(mtx_for_working_threads);
+
         header client_header = ReadHeader(hPipe);
 
         switch (client_header.task_code)
@@ -146,6 +148,7 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
     }
 }
 
+// Функция удаления клиента из множества
 void Server::CloseClient(int client_id)
 {
     auto client = find_if(_connections.begin(), _connections.end(),
