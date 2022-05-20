@@ -1,16 +1,30 @@
 #include "pch.h"
 #include "Connection.h"
 
-static int MAX_ID = 0;
+int Connection::MAX_ID = 0;
 
-Connection::Connection(): _id(++MAX_ID), _implementation(), _control_event()
+Connection::Connection(): _id(++MAX_ID), _implementation()
 {
 }
 
-template <typename Function, typename ...Args>
-void Connection::Start(Function&& init_function, Args&&... args)
+Connection::Connection(Connection&& connection)
 {
-	_implementation = std::thread(std::move(init_function), std::move(args));
+	_id = connection._id;
+	_implementation = std::move(connection._implementation);
+}
 
-	_control_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+Connection::~Connection()
+{
+	if (_implementation.joinable())
+		_implementation.detach();
+}
+
+int Connection::GetID() const
+{
+	return _id;
+}
+
+bool operator<(const Connection& a, const Connection& b)
+{
+	return a._id < b._id;
 }

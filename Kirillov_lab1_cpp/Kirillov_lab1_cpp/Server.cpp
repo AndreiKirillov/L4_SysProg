@@ -15,7 +15,7 @@ Server::~Server()
 }
 
 // Функция обработки подключенного клиента, будет выполняться в потоке. 
-void Server::ProcessClient(HANDLE hPipe)
+void Server::ProcessClient(HANDLE hPipe, int client_id)
 {
     while (true)
     {
@@ -76,6 +76,9 @@ void Server::ProcessClient(HANDLE hPipe)
                 {
                     DisconnectNamedPipe(hPipe);      // отключение клиента от сервера
                     CloseHandle(hPipe);
+                    CloseClient(client_id);         // Удаляем из хранилища соединений
+                    lock_guard<mutex> console_lock(console_mtx);
+                    cout << "\tClient ID=" << client_id << " disconnected from server" << endl;
                     return;
                 }
 
@@ -120,6 +123,15 @@ void Server::ProcessClient(HANDLE hPipe)
     }
 }
 
+void Server::CloseClient(int client_id)
+{
+    auto client = find_if(_connections.begin(), _connections.end(),
+        [&](auto& connection) {return connection.GetID() == client_id; });
+
+    if (client != _connections.end())
+        _connections.erase(client);
+}
+
 // Функция подключения нового клиента к серверу
 void Server::WaitForConnection()
 {
@@ -133,7 +145,9 @@ void Server::WaitForConnection()
     }
     else
     {
-        _connections.push_back(std::move(std::thread(&Server::ProcessClient, this, hPipe)));  // запускаем обработку клиента в отдельном потоке
+        Connection new_connection;                                  // Создаём новое соединение
+        new_connection.Start(&Server::ProcessClient, this, hPipe, new_connection.GetID());    // Запускаем его обработку в отдельном потоке 
+        _connections.insert(std::move(new_connection));
     }
 }
 
