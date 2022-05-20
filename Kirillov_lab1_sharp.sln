@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Kirillov_lab1_cpp", "Kirill
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileMapping", "FileMapping\FileMapping.vcxproj", "{5F440C00-42A4-407F-B15D-DEBF9916821A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PipeClient", "PipeClient\PipeClient.vcxproj", "{024B7AD7-125E-4C6A-81A4-F3CB190490A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,16 @@ Global
 		{5F440C00-42A4-407F-B15D-DEBF9916821A}.Release|x64.Build.0 = Release|x64
 		{5F440C00-42A4-407F-B15D-DEBF9916821A}.Release|x86.ActiveCfg = Release|Win32
 		{5F440C00-42A4-407F-B15D-DEBF9916821A}.Release|x86.Build.0 = Release|Win32
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Debug|x64.ActiveCfg = Debug|x64
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Debug|x64.Build.0 = Debug|x64
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Debug|x86.ActiveCfg = Debug|Win32
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Debug|x86.Build.0 = Debug|Win32
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Release|Any CPU.ActiveCfg = Release|Win32
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Release|x64.ActiveCfg = Release|x64
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Release|x64.Build.0 = Release|x64
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Release|x86.ActiveCfg = Release|Win32
+		{024B7AD7-125E-4C6A-81A4-F3CB190490A0}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

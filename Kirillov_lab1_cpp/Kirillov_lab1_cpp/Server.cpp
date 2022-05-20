@@ -6,17 +6,12 @@ extern shared_mutex data_mtx;
 extern shared_ptr<string> ptr_global_message;
 extern HANDLE confirm_finish_of_thread_event;
 
-Server::Server(): _connections(),_working_threads(), _tasks_to_do()
+Server::Server(): _connections(),_working_threads()
 {
 }
 
 Server::~Server()
 {
-	/*for (auto thread_connection : _connections)
-	{
-		if (thread_connection.joinable())
-			thread_connection.detach();
-	}*/
 }
 
 // Функция обработки подключенного клиента, будет выполняться в потоке. 
@@ -126,29 +121,24 @@ void Server::ProcessClient(HANDLE hPipe)
 }
 
 // Функция подключения нового клиента к серверу
-void Server::WaitForConnection()    
+void Server::WaitForConnection()
 {
-	while (true)
-	{
-		HANDLE hPipe = CreateNamedPipeA("\\\\.\\pipe\MyPipe_lab4", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-			PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
+    HANDLE hPipe = CreateNamedPipeA("\\\\.\\pipe\\MyPipe_lab4", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+        PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
 
-		if (!ConnectNamedPipe(hPipe, NULL))
-		{
-			std::lock_guard<std::mutex> console_lock(console_mtx);
-			std::cout << "Server error connecting to client!" << std::endl;
-		}
-		else
-		{
-			_connections.insert(std::thread(&Server::ProcessClient, this, hPipe));  // запускаем обработку клиента в отдельном потоке
-		}
-	}
+    if (!ConnectNamedPipe(hPipe, NULL))
+    {
+        std::lock_guard<std::mutex> console_lock(console_mtx);
+        std::cout << "Server error connecting to client!" << std::endl;
+    }
+    else
+    {
+        _connections.push_back(std::move(std::thread(&Server::ProcessClient, this, hPipe)));  // запускаем обработку клиента в отдельном потоке
+    }
 }
 
-Task Server::WaitForTask()
+int Server::GetClientsCount()
 {
-	//while
-	Task front_task = _tasks_to_do.front();
-	_tasks_to_do.pop();
-	return front_task;
+    return _connections.size();
 }
+

@@ -140,120 +140,17 @@ int main()
 
             ThreadStorage threads_storage;
 
-            // Запускаем поиск новых подключений в отдельном потоке
-            thread connections_checker(&Server::WaitForConnection, main_server); 
-            connections_checker.detach();
-
             while (true)
             {
-                Task current_task = main_server.WaitForTask();
-                //int event_index = WaitForMultipleObjects(4, hControlEvents, FALSE, INFINITE) - WAIT_OBJECT_0; // Ждём событие от 
-                                                                                                              // главной программы
-                switch (current_task)
-                {
-                case Task::start_thread:         // Событие создания потока
-                {
-                    std::unique_ptr<ThreadKirillov> new_thread = std::make_unique<ThreadKirillov>(); // Новый объект потока
+                unique_lock<mutex> console_lock(console_mtx);
+                cout << ".............Searching new connection............." << endl;
+                console_lock.unlock();
 
-                    // параметры для потока
-                    int thread_id = threads_storage.GetCount() + 1;
-                    HANDLE thread_finish_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-                    HANDLE thread_msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-                    if (thread_finish_event == NULL || thread_msg_event == NULL)
-                    {
-                        //SetEvent(error_event);
-                        break;
-                    }
+                main_server.WaitForConnection();
 
-                    std::weak_ptr<string> wptr_to_message(ptr_global_message); // передадим в поток этот указатель на сообщение из канала
-
-                    // инициализируем объект реальным потоком
-                    new_thread->Init(std::thread(ThreadFunction, thread_id, thread_finish_event, thread_msg_event, std::move(wptr_to_message)));
-                    new_thread->SetID(thread_id);
-                    new_thread->SetFinishEvent(thread_finish_event);
-                    new_thread->SetMessageEvent(thread_msg_event);
-
-                    threads_storage.AddThread(std::move(new_thread));   // Помещаем в общее хранилище потоков
-                    SetEvent(confirm_event);
-                }
-                break;
-
-                case Task::stop_thread:              // Событие завершения потока
-                {
-                    if (threads_storage.GetCount() > 0)
-                    {
-                        threads_storage.FinishLastThread();
-                        WaitForSingleObject(confirm_finish_of_thread_event, INFINITE); // Ждём завершение потока
-                        threads_storage.DeleteLastThread();                            // Только после этого освобождаем ресурсы
-                        SetEvent(confirm_event);
-                    }
-                    else      // Освобождаем все ресурсы, если нет активных потоков
-                    {
-                        SetEvent(close_programm_event);
-                        threads_storage.KillAndReleaseAll();
-                        CloseAllObjects(kernel_objects);
-                        CloseHandle(confirm_finish_of_thread_event);
-                        ClosePipeResources();
-                        return 0;
-                    }
-                }
-                break;
-
-                case Task::process_message:
-                {
-                    header msg_header = ReadHeader();    // читаем заголовок, чтобы узнать, какой поток должен читать сообщение
-                    if (msg_header.message_size != 0)
-                    {
-                        unique_lock<shared_mutex> writing_data_lock(data_mtx); // монопольный захват мьютекса для записи нового сообщения 
-                                                                          // в этот момент потоки с общей блокировкой не смогут читать
-
-                        *ptr_global_message = ReadFromParent(msg_header);  // читаем сообщение из анонимного канала
-                        writing_data_lock.unlock();                          // освобождаем монопольный захват
-
-                        switch (msg_header.thread_id)
-                        {
-                        case -1:                               // Чтение из всех потоков
-                        {
-                            ProcessMessage(ptr_global_message);
-                            threads_storage.ActionAll();
-                        }
-                        break;
-
-                        case 0:                                // Чтение из главного потока
-                        {
-                            ProcessMessage(ptr_global_message);
-                        }
-                        break;
-
-                        default:                              // Чтение из произвольного потока
-                        {
-                            try
-                            {
-                                threads_storage.ActionThreadByID(msg_header.thread_id);
-                            }
-                            catch (exception ex)             // вдруг нет потока с данным id
-                            {
-                                lock_guard<mutex> console_lock(console_mtx);
-                                cout << ex.what() << endl;
-                            }
-                        }
-                        }
-
-                    }
-                    SetEvent(confirm_event);
-                }
-                break;
-
-                case 3:      // Закрытие программы
-                {
-                    SetEvent(close_programm_event);
-                    threads_storage.KillAndReleaseAll();
-                    CloseAllObjects(kernel_objects);
-                    CloseHandle(confirm_finish_of_thread_event);
-                    ClosePipeResources();
-                    return 0;
-                }
-                }
+                console_lock.lock();
+                cout << "New client connected to server!" << endl
+                    << "Number of clients: " << main_server.GetClientsCount();
             }
 
         }

@@ -8,9 +8,9 @@
 class Server
 {
 private:
-	std::set<std::thread> _connections;
+	std::vector<std::thread> _connections;
 	ThreadStorage _working_threads;
-	std::queue<Task> _tasks_to_do;
+
 
 	void ProcessClient(HANDLE hConnection);
 public:
@@ -19,6 +19,6 @@ public:
 
 	void WaitForConnection();
 
-	Task WaitForTask();
+	int GetClientsCount();
 };
 
