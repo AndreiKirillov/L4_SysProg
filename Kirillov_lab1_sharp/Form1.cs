@@ -58,6 +58,16 @@ namespace Kirillov_lab1_sharp
             InitializeComponent();
         }
 
+        private void RefreshListThreads(int numThreads)
+        {
+            listbox_threads.Items.Clear();
+            count_threads = 0;
+            listbox_threads.Items.Add("Все потоки");
+            listbox_threads.Items.Add("Главный поток");
+            for (int i = 0; i < numThreads; i++)
+                listbox_threads.Items.Add($"{++count_threads}-й поток");
+        }
+
         private void btn_connect_Click(object sender, EventArgs e)
         {
             if (!is_connected)
@@ -70,10 +80,7 @@ namespace Kirillov_lab1_sharp
                     {
                         is_connected = true;
 
-                        listbox_threads.Items.Add("Все потоки");
-                        listbox_threads.Items.Add("Главный поток");
-                        for(int num = 0; num < server_answer.threads_count; num++)
-                            listbox_threads.Items.Add($"{++count_threads}-й поток");
+                        RefreshListThreads(server_answer.threads_count);
                     }
                     else
                     {
@@ -96,122 +103,153 @@ namespace Kirillov_lab1_sharp
 
         private void btn_start_Click(object sender, EventArgs e)
         {
-            //if(!is_connected)
-            //{
-            //    listbox_threads.Items.Clear();
-            //    count_threads = 0;
-            //    if (textBox_Nthreads.TextLength == 0)
-            //    {
-            //        MessageBox.Show("Внимание! Задайте количество создаваемых потоков!");
-            //        return;
-            //    }
-                
-            //    listbox_threads.Items.Add("Все потоки");
-            //    listbox_threads.Items.Add("Главный поток");
-            //    int nThreads = Convert.ToInt32(textBox_Nthreads.Text);
-            //    if (confirmEvent.WaitOne())
-            //        if (nThreads > 0)
-            //        {
-            //            for (int i = 0; i < nThreads; i++)
-            //            {
-            //                //WriteToChild()
-            //                startEvent.Set();
-            //                if(confirmEvent.WaitOne(-1))
-            //                    listbox_threads.Items.Add($"{++count_threads}-й поток");
-            //            }
-            //        }
-            //}
-            //else
-            //{
-            //    if (textBox_Nthreads.TextLength == 0)
-            //    {
-            //        MessageBox.Show("Внимание! Задайте количество создаваемых потоков!");
-            //        return;
-            //    }
-            //    int nThreads = Convert.ToInt32(textBox_Nthreads.Text);
-            //    if (nThreads > 0)
-            //    {
-            //        for (int i = 0; i < nThreads; i++)
-            //        { 
-            //            startEvent.Set();
-            //            confirmEvent.WaitOne();
-            //            listbox_threads.Items.Add($"{++count_threads}-й поток");
-            //        }
-            //    }
-            //}
-            
+            if (is_connected)
+            {
+                if (textBox_Nthreads.TextLength == 0)
+                {
+                    MessageBox.Show("Внимание! Задайте количество создаваемых потоков!");
+                    return;
+                }
+
+                header request = new header();
+                request.event_code = 0;
+                request.thread_id = 0;
+                int nThreads = Convert.ToInt32(textBox_Nthreads.Text);
+                request.message_size = nThreads;  // В этом поле будем передавать кол-во потоков для создания
+
+                if(!SendMessageToServer(new StringBuilder(""), ref request))
+                {
+                    MessageBox.Show("Не удалось отправить запрос!");
+                    return;
+                }
+                else
+                {
+                    confirm_header server_answer = WaitForConfirm();
+                    if(server_answer.confirm_status == 0)
+                    {
+                        MessageBox.Show("Сервер не обработал запрос!");
+                        return;
+                    }
+                    else 
+                    {
+                        RefreshListThreads(server_answer.threads_count);
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Внимание! Вы не подключены к серверу!");
+                return;
+            }
+
         }
 
         private void btn_stop_Click(object sender, EventArgs e)
         {
-            //if (child_process != null)
-            //{
-            //    stopEvent.Set();
-            //    if(count_threads == 0)
-            //    {                                      // событие закрытия дочерней программы
-            //        if (closeProgrammEvent.WaitOne())
-            //        {
-            //            listbox_threads.Items.Clear();
-            //            count_threads = 0;
-            //            child_process.Close();
-            //            child_process = null;
-            //        }
-            //    }
-            //    else                                  // лишь завершение потока
-            //    {
-            //        if (confirmEvent.WaitOne())
-            //        {
-            //            listbox_threads.Items.RemoveAt(count_threads + 1);
-            //            --count_threads;
-            //        }
-            //    }
-            //}
-            //else 
-            //{
-            //    MessageBox.Show("Ошибка! Дочерняя программа не запущена!");
-            //}
+            if (is_connected)
+            {
+                if (count_threads > 0)
+                {
+                    header request = new header();
+                    request.event_code = 1;
+                    request.thread_id = 0;
+                    request.message_size = 0;
+
+                    if (!SendMessageToServer(new StringBuilder(""), ref request))
+                    {
+                        MessageBox.Show("Не удалось отправить запрос!");
+                        return;
+                    }
+                    else
+                    {
+                        confirm_header server_answer = WaitForConfirm();
+                        if (server_answer.confirm_status == 0)
+                        {
+                            MessageBox.Show("Сервер не обработал запрос!");
+                            return;
+                        }
+                        else
+                        {
+                            RefreshListThreads(server_answer.threads_count);
+                        }
+                    }
+                }
+                else                                 
+                {
+                    MessageBox.Show("Внимание! Нет работающих потоков!");
+                    return;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Внимание! Вы не подключены к серверу!");
+            }
         }
 
         private void btn_send_Click(object sender, EventArgs e)
         {
-            //if (child_process != null)
-            //{
-            //    if (textBox_Message.TextLength == 0)
-            //    {
-            //        MessageBox.Show("Внимание! Напишите текст сообщения!");
-            //        return;
-            //    }
-            //    if(listbox_threads.SelectedIndex < 0)
-            //    {
-            //        MessageBox.Show("Внимание! Выберете поток!");
-            //        return;
-            //    }
+            if (is_connected)
+            {
+                if (textBox_Message.TextLength == 0)
+                {
+                    MessageBox.Show("Внимание! Напишите текст сообщения!");
+                    return;
+                }
+                if (listbox_threads.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Внимание! Выберете поток!");
+                    return;
+                }
 
-            //    StringBuilder message = new StringBuilder(textBox_Message.Text);
-            //    header h = new header();
-            //    h.thread_id = listbox_threads.SelectedIndex - 1;
-            //    h.message_size = message.Length;
+                StringBuilder message = new StringBuilder(textBox_Message.Text);
+                header request = new header();
+                request.event_code = 2;
+                request.thread_id = listbox_threads.SelectedIndex - 1;
+                request.message_size = message.Length;
 
-            //    if (!WriteToChild(message, ref h))
-            //    {
-            //        MessageBox.Show("Внимание! Не удалось отправить сообщения!");
-            //        return;
-            //    }
-
-            //    messageEvent.Set();
-            //    confirmEvent.WaitOne();
-            //}
-            //else
-            //{
-            //    MessageBox.Show("Ошибка! Дочерняя программа не запущена!");
-            //}
+                if (!SendMessageToServer(message, ref request))
+                {
+                    MessageBox.Show("Внимание! Не удалось отправить сообщение!");
+                    return;
+                }
+                else 
+                {
+                    confirm_header server_answer = WaitForConfirm();
+                    if (server_answer.confirm_status == 0)
+                    {
+                        MessageBox.Show("Сервер не обработал запрос!");
+                        return;
+                    }
+                    else
+                    {
+                        if(message.ToString() == "quit")
+                        {
+                            is_connected = false;
+                            listbox_threads.Items.Clear();
+                            count_threads = 0;
+                        }
+                        else
+                            RefreshListThreads(server_answer.threads_count);
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Внимание! Вы не подключены к серверу!");
+            }
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //closeProgrammEvent.Set();
-            //if(child_process != null)
-            //    child_process.Close();
+            if(is_connected)
+            {
+                StringBuilder message = new StringBuilder("quit");
+                header request = new header();
+                request.event_code = 2;
+                request.thread_id = 0;
+                request.message_size = message.Length;
+                SendMessageToServer(message, ref request);
+            }
         }
 
     }

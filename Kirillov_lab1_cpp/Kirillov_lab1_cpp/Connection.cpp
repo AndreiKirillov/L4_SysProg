@@ -7,12 +7,6 @@ Connection::Connection(): _id(++MAX_ID), _implementation()
 {
 }
 
-Connection::Connection(Connection&& connection)
-{
-	_id = connection._id;
-	_implementation = std::move(connection._implementation);
-}
-
 Connection::~Connection()
 {
 	if (_implementation.joinable())

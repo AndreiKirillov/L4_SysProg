@@ -9,7 +9,7 @@
 class Server
 {
 private:
-	set<Connection> _connections;
+	set<unique_ptr<Connection>> _connections;
 	ThreadStorage _working_threads;
 	mutex mtx_for_working_threads;
 

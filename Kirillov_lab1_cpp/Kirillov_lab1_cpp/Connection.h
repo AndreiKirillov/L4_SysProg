@@ -10,7 +10,6 @@ private:
 	static int MAX_ID;
 public:
 	Connection();
-	Connection(Connection&& connection);
 	~Connection();
 
 	// Функция запуска обработки соединения
