@@ -17,8 +17,19 @@ Server::~Server()
 // Функция обработки подключенного клиента, будет выполняться в потоке. 
 void Server::ProcessClient(HANDLE hPipe, int client_id)
 {
+    header check_message = ReadHeader(hPipe);          
+    if (check_message.task_code == Task::check_server)      // Отправляем клиенту подтверждение подключения
+    {
+        confirm_header answer;
+        answer.confirm_status = 1;
+        answer.threads_count = _working_threads.GetCount();   // клиент сразу узнает, сколько потоков работает
+        SendConfirm(hPipe, answer);
+    }
+
     while (true)
     {
+
+
         header client_header = ReadHeader(hPipe);
 
         switch (client_header.task_code)

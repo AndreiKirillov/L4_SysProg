@@ -8,7 +8,7 @@ using namespace std;
 // тип задачи для обработки сервером
 enum class Task
 {
-	start_thread, stop_thread, process_message
+	start_thread, stop_thread, process_message, check_server
 };
 
 struct header // заголовок для сообщения

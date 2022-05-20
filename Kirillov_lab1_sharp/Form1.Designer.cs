@@ -36,11 +36,12 @@
             this.btn_send = new System.Windows.Forms.Button();
             this.textBox_Message = new System.Windows.Forms.TextBox();
             this.label_Message = new System.Windows.Forms.Label();
+            this.btn_connect = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btn_start
             // 
-            this.btn_start.Location = new System.Drawing.Point(12, 57);
+            this.btn_start.Location = new System.Drawing.Point(12, 146);
             this.btn_start.Name = "btn_start";
             this.btn_start.Size = new System.Drawing.Size(148, 68);
             this.btn_start.TabIndex = 0;
@@ -50,7 +51,7 @@
             // 
             // btn_stop
             // 
-            this.btn_stop.Location = new System.Drawing.Point(12, 131);
+            this.btn_stop.Location = new System.Drawing.Point(12, 220);
             this.btn_stop.Name = "btn_stop";
             this.btn_stop.Size = new System.Drawing.Size(148, 68);
             this.btn_stop.TabIndex = 1;
@@ -70,7 +71,7 @@
             // label_Nthreads
             // 
             this.label_Nthreads.AutoSize = true;
-            this.label_Nthreads.Location = new System.Drawing.Point(9, 9);
+            this.label_Nthreads.Location = new System.Drawing.Point(9, 98);
             this.label_Nthreads.Name = "label_Nthreads";
             this.label_Nthreads.Size = new System.Drawing.Size(133, 17);
             this.label_Nthreads.TabIndex = 3;
@@ -78,7 +79,7 @@
             // 
             // textBox_Nthreads
             // 
-            this.textBox_Nthreads.Location = new System.Drawing.Point(12, 29);
+            this.textBox_Nthreads.Location = new System.Drawing.Point(12, 118);
             this.textBox_Nthreads.Name = "textBox_Nthreads";
             this.textBox_Nthreads.Size = new System.Drawing.Size(100, 22);
             this.textBox_Nthreads.TabIndex = 4;
@@ -109,11 +110,22 @@
             this.label_Message.TabIndex = 7;
             this.label_Message.Text = "Введите текст для отправки сообщения";
             // 
+            // btn_connect
+            // 
+            this.btn_connect.Location = new System.Drawing.Point(12, 12);
+            this.btn_connect.Name = "btn_connect";
+            this.btn_connect.Size = new System.Drawing.Size(148, 68);
+            this.btn_connect.TabIndex = 8;
+            this.btn_connect.Text = "Connect";
+            this.btn_connect.UseVisualStyleBackColor = true;
+            this.btn_connect.Click += new System.EventHandler(this.btn_connect_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(546, 452);
+            this.Controls.Add(this.btn_connect);
             this.Controls.Add(this.label_Message);
             this.Controls.Add(this.textBox_Message);
             this.Controls.Add(this.btn_send);
@@ -140,6 +152,7 @@
         private System.Windows.Forms.Button btn_send;
         private System.Windows.Forms.TextBox textBox_Message;
         private System.Windows.Forms.Label label_Message;
+        private System.Windows.Forms.Button btn_connect;
     }
 }
 

@@ -128,4 +128,17 @@ extern "C"
 		return header_for_client;
 	}
 
+	// функция для проверки соединения с сервером, плюс сразу узнаем кол-во потоков на сервере
+	__declspec(dllexport) void __stdcall CheckServer()
+	{
+		DWORD dwDone;
+		header request{ 3, 0,0 };
+		WriteFile(hClientPipe, &request, sizeof(header), &dwDone, nullptr);
+
+		//confirm_header answer;
+
+		//if (!TransactNamedPipe(hClientPipe, &request, sizeof(header), &answer, sizeof(confirm_header), &dwDone, nullptr))
+			//return confirm_header{ 0,0 };
+		//return answer;
+	}
 }

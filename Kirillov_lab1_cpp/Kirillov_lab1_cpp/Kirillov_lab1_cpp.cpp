@@ -138,8 +138,6 @@ int main()
 
             ptr_global_message = make_shared<string>(); // память под будущие сообщения
 
-            ThreadStorage threads_storage;
-
             while (true)
             {
                 unique_lock<mutex> console_lock(console_mtx);
