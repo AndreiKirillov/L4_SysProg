@@ -150,7 +150,7 @@ int main()
 
                 console_lock.lock();
                 cout << "New client connected to server!" << endl
-                    << "Number of clients: " << main_server.GetClientsCount();
+                    << "Number of clients: " << main_server.GetClientsCount() << endl;
             }
 
         }

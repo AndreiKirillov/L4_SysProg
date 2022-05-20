@@ -9,8 +9,9 @@
 class Server
 {
 private:
-	std::set<Connection> _connections;
+	set<Connection> _connections;
 	ThreadStorage _working_threads;
+	mutex mtx_for_working_threads;
 
 
 	void ProcessClient(HANDLE hConnection, int client_id);

@@ -75,6 +75,11 @@ struct header
 	int message_size;
 };
 
+struct confirm_header // заголовок для подтверждения
+{
+	int confirm_status;
+	int threads_count;
+};
 
 HANDLE hClientPipe;
 
@@ -113,26 +118,14 @@ extern "C"
 		return true;
 	}
 
+	__declspec(dllexport) confirm_header __stdcall WaitForConfirm()
+	{
+		DWORD dwDone;
+		confirm_header header_for_client;
+
+		if (!ReadFile(hClientPipe, &header_for_client, sizeof(confirm_header), &dwDone, nullptr) || dwDone == 0) 
+			return confirm_header{ 0,0 };
+		return header_for_client;
+	}
+
 }
-
-// Функция чтения заголовка сообщения
-__declspec(dllexport) header __stdcall ReadHeader()
-{
-	header received_header{ -1,-1,-1 };
-
-	DWORD dwRead;
-	if (!ReadFile(hClientPipe, &received_header, sizeof(header), &dwRead, nullptr) || dwRead == 0)
-		return header{ -1,-1,-1 };
-
-	return received_header;
-}
-
-//string ReadFromServer()
-//{
-//	DWORD dwDone;
-//	int nLength = GetInt(hPipe);
-//
-//	vector <char> v(nLength);
-//	ReadFile(hPipe, &v[0], nLength, &dwDone, NULL);
-//	return string(&v[0], nLength);
-//}

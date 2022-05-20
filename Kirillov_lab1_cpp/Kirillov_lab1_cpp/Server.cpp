@@ -32,7 +32,10 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
             HANDLE thread_finish_event = CreateEventA(NULL, FALSE, FALSE, NULL);
             HANDLE thread_msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
             if (thread_finish_event == NULL || thread_msg_event == NULL)
+            {
+                SendConfirm(hPipe, confirm_header{ 0,0 }); // сообщаем клиенту об ошибке
                 break;
+            }
 
             std::weak_ptr<string> wptr_to_message(ptr_global_message); // передадим в поток этот указатель на сообщение из канала
 
@@ -43,7 +46,12 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
             new_thread->SetMessageEvent(thread_msg_event);
 
             _working_threads.AddThread(std::move(new_thread));   // Помещаем в общее хранилище потоков
-            //SetEvent(confirm_event);
+            
+            //Посылаем подтверждение
+            confirm_header header_for_client;
+            header_for_client.confirm_status = 1;
+            header_for_client.threads_count = _working_threads.GetCount();
+            SendConfirm(hPipe, header_for_client);
         }
         break;
 
@@ -54,16 +62,16 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
                 _working_threads.FinishLastThread();
                 WaitForSingleObject(confirm_finish_of_thread_event, INFINITE); // Ждём завершение потока
                 _working_threads.DeleteLastThread();                            // Только после этого освобождаем ресурсы
-                //SetEvent(confirm_event);
-            }
-            else      // Освобождаем все ресурсы, если нет активных потоков
-            {
-                //SetEvent(close_programm_event);
-                //threads_storage.KillAndReleaseAll();
 
-                CloseHandle(confirm_finish_of_thread_event);
-                return;
+                //Посылаем подтверждение
+                confirm_header header_for_client;
+                header_for_client.confirm_status = 1;
+                header_for_client.threads_count = _working_threads.GetCount();
+                SendConfirm(hPipe, header_for_client);
             }
+            else
+                SendConfirm(hPipe, confirm_header{ 0,0 });
+            
         }
         break;
 
@@ -112,12 +120,17 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
                     {
                         lock_guard<mutex> console_lock(console_mtx);
                         cout << ex.what() << endl;
+                        SendConfirm(hPipe, confirm_header{ 0,0 });    // Сообщаем клиенту об ошибке
                     }
                 }
                 }
 
             }
-            // SetEvent(confirm_event);
+            //Посылаем подтверждение
+            confirm_header header_for_client;
+            header_for_client.confirm_status = 1;
+            header_for_client.threads_count = _working_threads.GetCount();
+            SendConfirm(hPipe, header_for_client);
         }
         }
     }

@@ -20,12 +20,12 @@ inline string ReadMessage(HANDLE hPipe, const header& h)
 	return string(&v[0], h.message_size);
 }
 
-inline void SendConfirm(HANDLE hPipe, int n, bool bFlush = true)
+inline void SendConfirm(HANDLE hPipe, const confirm_header& h)     // Функция отправки подтверждения клиенту
 {
 	DWORD dwDone;
 
-	WriteFile(hPipe, &n, sizeof(n), &dwDone, NULL);
-	if (bFlush)
-		FlushFileBuffers(hPipe);
+	WriteFile(hPipe, &h, sizeof(confirm_header), &dwDone, NULL);
+	//if (bFlush)
+		//FlushFileBuffers(hPipe);
 }
 

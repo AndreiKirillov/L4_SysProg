@@ -12,10 +12,18 @@ struct header // заголовок для сообщения
 	int message_size;
 };
 
+struct confirm_header // заголовок для подтверждения
+{
+	int confirm_status;
+	int threads_count;
+};
+
+
 extern "C"
 {
 	__declspec(dllimport) bool __stdcall ConnectToServer();
 	__declspec(dllimport) bool __stdcall SendMessageToServer(const char* message, header& h);
+	__declspec(dllimport) confirm_header __stdcall WaitForConfirm();
 }
 
 using namespace std;
@@ -26,17 +34,68 @@ int main()
 	{
 		while (true)
 		{
-			string s;
-			cin >> s;
-
-			header msg_header{ 2, 0, s.size() };
-
-			SendMessageToServer(s.c_str(), msg_header);
-			if (s == "quit")
+			cout << "Enter an action" << endl;
+			int event_index;
+			cin >> event_index;
+			switch (event_index)
 			{
-				break;
+			case 0:
+			{
+				header msg_header{ 0, 0, 0 };
+
+				SendMessageToServer("", msg_header);
+
+				confirm_header h = WaitForConfirm();
+				if (h.confirm_status)
+				{
+					cout << "Successful" << endl
+						<< "Number of threads = " << h.threads_count << endl;
+				}
+				else
+					cout << "Error answer" << endl;
 			}
-			//cout << GetInt(hPipe) << endl;
+			break;
+
+			case 1:
+			{
+				header msg_header{ 1, 0, 0 };
+
+				SendMessageToServer("", msg_header);
+
+				confirm_header h = WaitForConfirm();
+				if (h.confirm_status)
+				{
+					cout << "Successful" << endl
+						<< "Number of threads = " << h.threads_count << endl;
+				}
+				else
+					cout << "Error answer" << endl;
+			}
+			break;
+
+			case 2:
+			{
+				cout << "Enter a message" << endl;
+				string s;
+				cin >> s;
+
+				header msg_header{ 2, 0, s.size() };
+
+				SendMessageToServer(s.c_str(), msg_header);
+				if (s == "quit")
+				{
+					return 0;
+				}
+				confirm_header h = WaitForConfirm();
+				if (h.confirm_status)
+				{
+					cout << "Successful" << endl
+						<< "Number of threads = " << h.threads_count << endl;
+				}
+				else
+					cout << "Error answer" << endl;
+			}
+			}
 		}
 	}
 	else
