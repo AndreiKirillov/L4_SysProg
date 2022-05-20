@@ -5,16 +5,19 @@
 
 using namespace std;
 
+// тип задачи для обработки сервером
+enum class Task
+{
+	start_thread, stop_thread, process_message
+};
+
 struct header // заголовок для сообщения
 {
-    int event_code;
+    Task task_code;
     int thread_id;
     int message_size;
 };
 
-// тип задачи для обработки сервером
-enum class Task
-{
-	nothing, start_thread, stop_thread, process_message
-};
+void ThreadFunction(int thread_id, HANDLE finish_event, HANDLE receive_msg_event, weak_ptr<string>&& ptr_to_message);
 
+void ProcessMessage(shared_ptr<string>& message);

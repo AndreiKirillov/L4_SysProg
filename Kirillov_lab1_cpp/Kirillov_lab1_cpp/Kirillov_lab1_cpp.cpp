@@ -26,7 +26,7 @@ shared_mutex data_mtx;       // будет синхронизировать до
 mutex console_mtx;    // будет синхронизировать работу консоли
 HANDLE confirm_finish_of_thread_event = CreateEventA(NULL, FALSE, FALSE, NULL);  // будет сообщать о завершении потока
 
-shared_ptr<string> ptr_received_message;
+shared_ptr<string> ptr_global_message;
 
 // Функция обработки сообщения в главном потоке
 void ProcessMessage(shared_ptr<string>& message)
@@ -136,7 +136,7 @@ int main()
 
             Server main_server;
 
-            ptr_received_message = make_shared<string>(); // память под будущие сообщения
+            ptr_global_message = make_shared<string>(); // память под будущие сообщения
 
             ThreadStorage threads_storage;
 
@@ -146,7 +146,7 @@ int main()
 
             while (true)
             {
-                Task current_task = main_server.GetOldestTask();
+                Task current_task = main_server.WaitForTask();
                 //int event_index = WaitForMultipleObjects(4, hControlEvents, FALSE, INFINITE) - WAIT_OBJECT_0; // Ждём событие от 
                                                                                                               // главной программы
                 switch (current_task)
@@ -165,7 +165,7 @@ int main()
                         break;
                     }
 
-                    std::weak_ptr<string> wptr_to_message(ptr_received_message); // передадим в поток этот указатель на сообщение из канала
+                    std::weak_ptr<string> wptr_to_message(ptr_global_message); // передадим в поток этот указатель на сообщение из канала
 
                     // инициализируем объект реальным потоком
                     new_thread->Init(std::thread(ThreadFunction, thread_id, thread_finish_event, thread_msg_event, std::move(wptr_to_message)));
@@ -207,21 +207,21 @@ int main()
                         unique_lock<shared_mutex> writing_data_lock(data_mtx); // монопольный захват мьютекса для записи нового сообщения 
                                                                           // в этот момент потоки с общей блокировкой не смогут читать
 
-                        *ptr_received_message = ReadFromParent(msg_header);  // читаем сообщение из анонимного канала
+                        *ptr_global_message = ReadFromParent(msg_header);  // читаем сообщение из анонимного канала
                         writing_data_lock.unlock();                          // освобождаем монопольный захват
 
                         switch (msg_header.thread_id)
                         {
                         case -1:                               // Чтение из всех потоков
                         {
-                            ProcessMessage(ptr_received_message);
+                            ProcessMessage(ptr_global_message);
                             threads_storage.ActionAll();
                         }
                         break;
 
                         case 0:                                // Чтение из главного потока
                         {
-                            ProcessMessage(ptr_received_message);
+                            ProcessMessage(ptr_global_message);
                         }
                         break;
 
