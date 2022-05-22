@@ -28,14 +28,16 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
 
     while (true)
     {
-        lock_guard<mutex> lock_to_threads(mtx_for_working_threads);
-
+        //shared_lock<shared_mutex> read_threads_lock(mtx_for_working_threads);
         header client_header = ReadHeader(hPipe);
-
+        lock_guard<mutex> lock_for_threads(mtx_for_working_threads);
         switch (client_header.task_code)
         {
         case Task::start_thread:         // Событие создания потока
         {
+            //read_threads_lock.mutex()->unlock_shared();
+            //lock_guard<shared_mutex> update_threads_lock(mtx_for_working_threads);
+
             // Создаём столько потоков, сколько было в запросе
             for (int request_thrd_count = 0; request_thrd_count < client_header.message_size; request_thrd_count++)
             {
@@ -47,7 +49,7 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
                 HANDLE thread_msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
                 if (thread_finish_event == NULL || thread_msg_event == NULL)
                 {
-                    SendConfirm(hPipe, confirm_header{ 0,0 }); // сообщаем клиенту об ошибке
+                    SendConfirm(hPipe, confirm_header{ 0,_working_threads.GetCount() }); // сообщаем клиенту об ошибке
                     break;
                 }
 
@@ -72,6 +74,8 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
 
         case Task::stop_thread:              // Событие завершения потока
         {
+            //read_threads_lock.mutex()->unlock_shared();
+            //lock_guard<shared_mutex> update_threads_lock(mtx_for_working_threads);
             if (_working_threads.GetCount() > 0)
             {
                 _working_threads.FinishLastThread();
@@ -85,7 +89,7 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
                 SendConfirm(hPipe, header_for_client);
             }
             else
-                SendConfirm(hPipe, confirm_header{ 0,0 });
+                SendConfirm(hPipe, confirm_header{ 0,_working_threads.GetCount() });
             
         }
         break;
@@ -134,7 +138,7 @@ void Server::ProcessClient(HANDLE hPipe, int client_id)
                 {
                     lock_guard<mutex> console_lock(console_mtx);
                     cout << ex.what() << endl;
-                    SendConfirm(hPipe, confirm_header{ 0,0 });    // Сообщаем клиенту об ошибке
+                    SendConfirm(hPipe, confirm_header{ 0,_working_threads.GetCount() });    // Сообщаем клиенту об ошибке
                 }
             }
             }

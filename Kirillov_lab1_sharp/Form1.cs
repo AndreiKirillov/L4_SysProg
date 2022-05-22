@@ -128,6 +128,7 @@ namespace Kirillov_lab1_sharp
                     if(server_answer.confirm_status == 0)
                     {
                         MessageBox.Show("Сервер не обработал запрос!");
+                        RefreshListThreads(server_answer.threads_count);
                         return;
                     }
                     else 
@@ -166,6 +167,7 @@ namespace Kirillov_lab1_sharp
                         if (server_answer.confirm_status == 0)
                         {
                             MessageBox.Show("Сервер не обработал запрос!");
+                            RefreshListThreads(server_answer.threads_count);
                             return;
                         }
                         else
@@ -218,6 +220,7 @@ namespace Kirillov_lab1_sharp
                     if (server_answer.confirm_status == 0)
                     {
                         MessageBox.Show("Сервер не обработал запрос!");
+                        RefreshListThreads(server_answer.threads_count);
                         return;
                     }
                     else
